@@ -1,39 +1,96 @@
 <!DOCTYPE html>
-<html>
-<head> 
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Device Code Login</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-    <div class="grid place-items-center h-screen">
-        <div
-            class="w-96 h-auto shadow-xl mx-auto px-4 mt-8 font-sans border-t-8 border-sky-600 pt-9 pb-9 pl-9 pr-9"
-        >
-            <h1 class="text-3xl mt-2">Enter User Code</h1>
-           
-            <form action="https://8f072ce6-2225-4629-9731-82aa9856c6b1.mock.pstmn.io/verifyusercode" method="POST">
-                <br /> 
-                <input
-                    type="text"
-                    name="user_code"
-                    class="w-full mt-2 border-b-2 border-slate-400 focus:outline-none pb-2"
-                    id="user_code"
-                    maxlength="16"
-                    autocomplete="off"
-                    placeholder="Code"
+    <!-- Container -->
+    <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
+        <h1 class="text-2xl font-bold text-center text-gray-700">Verify Your Device</h1>
+        <p class="text-gray-600 text-center mt-2">
+            Enter the code displayed on your device to proceed.
+        </p>
+
+        <!-- Form -->
+        <form id="userCodeForm" class="mt-6 space-y-4">
+            <div>
+                <label for="user_code" class="block text-sm font-medium text-gray-700">
+                    User Code
+                </label>
+                <input 
+                    type="text" 
+                    id="user_code" 
+                    name="user_code" 
+                    placeholder="e.g., ABCD-EFGH"
                     required
-                    autofocus
-                />   
-                <button class="btn w-28 h-8 bg-sky-600 text-white mt-6 hover:bg-sky-700 cursor-pointer" type="submit">Submit</button>
-                <div id="error-msg" class="text-red-600 mt-8 text-sm"></div>
-              </form>
-             
-        </div>
+                    class="mt-1 w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+            </div>
+
+            <button 
+                type="submit"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+                Submit
+            </button>
+
+            <p 
+                id="errorMessage" 
+                class="text-red-600 text-sm text-center mt-2 hidden"
+            >
+                Invalid or expired code. Please try again.
+            </p>
+        </form>
     </div>
- 
+
+    <!-- Script -->
+    <script>
+        document.getElementById("userCodeForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            // Collect the user code
+            const userCode = document.getElementById("user_code").value.trim();
+
+            // Clear previous errors
+            const errorMessage = document.getElementById("errorMessage");
+            errorMessage.style.display = "none";
+
+            try {
+                // Replace with your actual validation API endpoint
+                const apiUrl = "https://8f072ce6-2225-4629-9731-82aa9856c6b1.mock.pstmn.io/verifyusercode";
+                
+                // Make a POST request to validate the user code
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ user_code: userCode })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.is_valid) {
+                    // Redirect user to Azure AD B2C for authentication
+                    window.location.href = result.redirect_uri || "https://extrackdev.b2clogin.com/extrackdev.onmicrosoft.com/oauth2/v2.0/authorize";
+                } else {
+                    // Show an error message
+                    errorMessage.textContent = result.error || "Invalid or expired code. Please try again.";
+                    errorMessage.style.display = "block";
+                }
+
+                document.getElementById("user_code").value = '';
+
+            } catch (err) {
+                // Handle fetch or network errors
+                errorMessage.textContent = "An error occurred while validating the code. Please try again later.";
+                errorMessage.style.display = "block";
+            }
+        });
+    </script>
 </body>
 </html>
